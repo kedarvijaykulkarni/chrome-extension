@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+
+  "name": "Mantium AI Plugin",
+  "description": "This plugin allows users to interact with their Mantium AIs directly from the browser.",
+  "version": "1.0",
+
+  "action": {
+    "default_popup": "./src/index.html",
+    "default_title": "MantiumAI ::: Selection Prompt"
+  },
+  "icons": { "32": "./public/small-mantium-mark-color-small.png" },
+  "permissions": ["activeTab", "storage", "scripting", "contextMenus"],
+  "host_permissions": ["https://mantium-whatsapp-chatbot.herokuapp.com/"],
+  "background": {
+    "service_worker": "./src/background.js"
+  }
+}

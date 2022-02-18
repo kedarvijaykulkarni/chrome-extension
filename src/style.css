@@ -1,0 +1,233 @@
+/* ---------- New Org ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@100;300;400;700&family=Nunito:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+/* Color Library */
+.blue-text {
+  color: #00b7ff;
+}
+.green-text {
+  color: #69cc00;
+}
+.oxfordblue-text {
+  color: #081f3f;
+}
+.bluegray-text {
+  color: #394c65;
+}
+.seagreen-text {
+  color: #12c4b7;
+}
+.yellow-text {
+  color: #f6e017;
+}
+.black-text {
+  color: #010205;
+}
+.charcoal-text {
+  color: #42454d;
+}
+.sonicsilver-text {
+  color: #717479;
+}
+.quicksilver-text {
+  color: #a1a2a6;
+}
+.lightgray-text {
+  color: #d0d1d2;
+}
+.white-text {
+  color: #ffffff;
+}
+
+.blue-background {
+  background-color: #00b7ff;
+}
+.green-background {
+  background-color: #69cc00;
+}
+.oxfordblue-background {
+  background-color: #081f3f;
+}
+.bluegray-background {
+  background-color: #394c65;
+}
+.seagreen-background {
+  background-color: #12c4b7;
+}
+.yellow-background {
+  background-color: #f6e017;
+}
+.black-background {
+  background-color: #010205;
+}
+.charcoal-background {
+  background-color: #42454d;
+}
+.sonicsilver-background {
+  background-color: #717479;
+}
+.quicksilver-background {
+  background-color: #a1a2a6;
+}
+.lightgray-background {
+  background-color: #d0d1d2;
+}
+.white-background {
+  background-color: #ffffff;
+}
+
+/* ----- Typography ----- */
+body {
+  font-family: 'Nunito', sans-serif;
+  background-color: #051224;
+  color: #fff;
+  font-weight: 500;
+  line-height: 1.45 !important;
+}
+h1,
+h2,
+h3 {
+  font-family: 'Archivo', sans-serif;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.35 !important;
+}
+h1 {
+  font-size: 2.75em;
+  font-weight: 100;
+  color: #69cc00;
+}
+h2 {
+  font-size: 2.25em;
+  font-weight: 300;
+  color: #12c4b7;
+  padding-top: 24px;
+}
+h3 {
+  font-size: 2em;
+  color: #ffffff;
+  font-weight: 700;
+  padding-top: 24px;
+}
+h4 {
+  font-size: 1.5em;
+  color: #ffffff;
+  font-weight: 700;
+  padding-top: 16px;
+}
+h5 {
+  font-size: 1.25em;
+  color: #ffffff;
+  font-weight: 700;
+  padding-top: 16px;
+}
+h6 {
+  font-size: 1em;
+  color: #ffffff;
+  font-weight: 700;
+  padding-top: 16px;
+}
+p {
+  font-size: 16px;
+  color: #fff;
+  font-weight: 300;
+}
+.small {
+  font-size: 12px;
+}
+.disclaimer {
+  padding-top: 50px;
+}
+.date {
+  color: #394c65;
+  font-size: 12px;
+  font-weight: 300;
+  padding-top: 3px;
+}
+ul {
+  padding-bottom: 8px;
+}
+li {
+  line-height: 1.25;
+  padding-bottom: 8px;
+}
+
+a {
+  color: #00b7ff;
+  text-decoration: none;
+}
+a:hover {
+  color: #00b7ff;
+  text-decoration: none;
+}
+hr {
+  background-color: #00b7ff;
+}
+strong {
+  font-weight: 700;
+}
+td {
+  font-size: 12px;
+  padding: 12px;
+  border: 1px solid #d0d1d2;
+}
+th {
+  font-size: 16px;
+  padding: 12px;
+  border: 1px solid #d0d1d2;
+}
+
+/* ---------- Components ---------- */
+
+.navbar {
+  margin: 15px;
+}
+
+.container {
+  margin: 15px;
+}
+
+/* ---------- Loaders ---------- */
+
+.lds-facebook {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-facebook div {
+  display: inline-block;
+  position: absolute;
+  left: 8px;
+  width: 16px;
+  background: #fff;
+  animation: lds-facebook 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+}
+.lds-facebook div:nth-child(1) {
+  left: 8px;
+  animation-delay: -0.24s;
+}
+.lds-facebook div:nth-child(2) {
+  left: 32px;
+  animation-delay: -0.12s;
+}
+.lds-facebook div:nth-child(3) {
+  left: 56px;
+  animation-delay: 0;
+}
+@keyframes lds-facebook {
+  0% {
+    top: 8px;
+    height: 64px;
+  }
+  50%,
+  100% {
+    top: 24px;
+    height: 32px;
+  }
+}
