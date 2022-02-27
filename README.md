@@ -39,3 +39,9 @@ https://shiffman.net/a2z/chrome-ext/
 
 https://github.com/Programming-from-A-to-Z/A2Z-F17/blob/master/week10-chrome-ext/04_extension_browser_popup_messaging_2/background.js
 
+
+dynamic menu
+https://stackoverflow.com/questions/9862212/chrome-extension-dynamic-right-click-menu
+
+
+https://www.youtube.com/watch?v=jZgZbWtwcIU
