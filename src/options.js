@@ -1,7 +1,3 @@
-// https://developer.chrome.com/docs/extensions/mv3/options/
-// https://developer.chrome.com/docs/extensions/reference/storage/
-// https://googledeveloperexperts.github.io/issue-viewer-chrome-extension-codelab/
-
 let prompts = [];
 let mContextMenus = [];
 const container = document.getElementById('ad-prompts');
@@ -41,6 +37,7 @@ function restore_options() {
         input.name = item.id;
         input.id = item.id;
         input.value = item.promptId;
+        input.classList.add('prompt-field');
 
         rowEle.appendChild(input);
 
@@ -49,6 +46,9 @@ function restore_options() {
         remove.value = 'remove';
         remove.id = row.del;
 
+        // hide the remove now
+        remove.classList.add('hide');
+
         rowEle.appendChild(remove);
 
         document
@@ -56,26 +56,24 @@ function restore_options() {
           .addEventListener('click', removePrompt);
       });
 
-      console.log('mContextMenus :::', mContextMenus);
-
-      if (mContextMenus.length == 0 && prompts.length) {
+      if (mContextMenus.length != prompts.length) {
         prompts.forEach((item) => {
-          console.log('item :::', item);
+          if (!mContextMenus.some((cm) => item.id == cm.id)) {
+            promptId = document.getElementById(item.id).value;
 
-          promptId = document.getElementById(item.id).value;
-
-          item.promptId = promptId;
-          mContextMenus.push({
-            id: item.id,
-            title: item.title,
-            contexts: ['selection'],
-          });
-          // back.addListener(item);
-          item.hasAction = true;
+            item.promptId = promptId;
+            mContextMenus.push({
+              id: item.id,
+              title: item.title,
+              contexts: ['selection'],
+            });
+            item.hasAction = true;
+          }
         });
-      }
 
-      chrome.storage.sync.set({ mContextMenus, prompts });
+        chrome.storage.sync.set({ mContextMenus, prompts });
+        console.log('restore_options -> mContextMenus :::', mContextMenus);
+      }
     }
   });
 }
@@ -95,6 +93,7 @@ function addPromt() {
   input.type = 'text';
   input.name = String(inputIDPrefix + Number(totalPrompt + 1));
   input.id = String(inputIDPrefix + Number(totalPrompt + 1));
+  input.classList.add('prompt-field');
 
   rowEle.appendChild(input);
 
@@ -102,6 +101,9 @@ function addPromt() {
   remove.type = 'button';
   remove.value = 'remove';
   remove.id = String(deleteIDPrefix + Number(totalPrompt + 1));
+
+  // hide the remove now
+  remove.classList.add('hide');
 
   rowEle.appendChild(remove);
 
@@ -114,6 +116,8 @@ function addPromt() {
     hasAction: false,
     title: String('Promt ' + Number(totalPrompt + 1)),
   });
+
+  console.log('prompts :::', prompts);
 }
 
 function saveContextMenu() {
@@ -158,11 +162,29 @@ function saveContextMenu() {
 function removePrompt(parm) {
   console.log('remove prompt', this);
   console.log('remove prompt', this.id);
+  // prompts = prompts.filter((p) => p.del != this.id);
+  // chrome.storage.sync.set({ mContextMenus, prompts });
 }
 
 function notification(parm) {
-  console.log(parm);
   chrome.notifications.create('inform', parm);
+}
+
+function removeAll() {
+  let text = 'Are you sure?';
+  if (confirm(text) == true) {
+    chrome.storage.sync.set({ mContextMenus: [], prompts: [] });
+    chrome.contextMenus.removeAll(function () {
+      notification(
+        Object.assign(notifyObject, {
+          title: 'MantiumAI',
+          message: 'All menu delted',
+          priority: 2,
+        })
+      );
+      window.location.reload();
+    });
+  }
 }
 
 /*
@@ -172,3 +194,4 @@ function notification(parm) {
 document.addEventListener('DOMContentLoaded', restore_options);
 document.getElementById('add').addEventListener('click', addPromt);
 document.getElementById('save').addEventListener('click', saveContextMenu);
+document.getElementById('remove-all').addEventListener('click', removeAll);

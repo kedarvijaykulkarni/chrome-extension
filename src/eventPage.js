@@ -5,42 +5,29 @@ const notifyObject = {
   message: 'Your message',
 };
 
+let localPrompts = [];
+
 function notification(parm) {
-  console.log('parm 00000000000', parm);
   chrome.notifications.create('', parm);
 }
 
 function getword(info, tab) {
-  console.log('item ******************', info);
-  console.log('tab ******************', tab);
+  console.log('info ::', info);
+  console.log('tab ::', tab);
 
-  // if (info.menuItemId !== CONTEXT_MENU_ID) {
-  //   return;
-  // }
+  let prompt = localPrompts.filter((p) => p.id == info.menuItemId) || [];
+  let promptId = prompt[0].promptId;
 
-  function getResultString() {
+  function getResultString(promptId) {
+    alert('Your selected text send to MantiumAI');
     postData(
       'https://mantium-whatsapp-chatbot.herokuapp.com/chrome-extension',
       {
         message: window.getSelection().toString(),
       }
     ).then((data) => {
-      console.log('DATA ::::', data);
-      console.log(data.output); // JSON data parsed by `data.json()` call
-      // alert(data.output);
-
+      console.log('MantiumAI ::: response ->', data.output);
       chrome.storage.sync.set({ output: data.output });
-
-      chrome.notifications.create(
-        'output',
-        Object.assign(notifyObject, {
-          title: 'Result',
-          message: data.output,
-          priority: 2,
-        })
-      );
-
-      // chrome.runtime.sendMessage({ word: data.output });
     });
 
     async function postData(url = '', data = {}) {
@@ -48,7 +35,10 @@ function getword(info, tab) {
 
       var details = {
         message: data.message,
+        prompt_id: promptId,
       };
+
+      console.log(details);
 
       var formBody = [];
       for (var property in details) {
@@ -77,61 +67,43 @@ function getword(info, tab) {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     function: getResultString,
+    args: [promptId],
   });
+
+  /*
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: tab.id },
+        // files: ['script.js'],
+      },
+      () => {
+        getResultString(promptId);
+      }
+    );
+  */
 }
 
 // chrome.storage.sync.get()
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {
-  console.log('changes :::', changes);
-  console.log('namespace :::', namespace);
-
-  // for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-  // console.log('oldValue :::', oldValue);
-  // console.log('newValue :::', newValue);
-
-  // if (key == 'mContextMenus') {
-  newValue.forEach((item) => {
-    chrome.contextMenus.create(item, function () {
-      notification(
-        Object.assign(notifyObject, {
-          title: 'Context menu created',
-          message: 'Your Context menu are created!',
+  for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+    if (key == 'output' && newValue != oldValue) {
+      if (newValue != '') {
+        chrome.notifications.create('', {
+          type: 'basic',
+          iconUrl: '../public/small-mantium-mark-color-small.png',
+          title: 'MantiumAI :: Result',
+          message: newValue,
           priority: 2,
-        })
-      );
-    });
-    chrome.contextMenus.onClicked.addListener(getword);
-  });
-  // }
-  // console.log(key, newValue);
-  // }
-});
+        });
+      }
 
-// chrome.storage.onChanged.addListener(function(changes, areaName) {
-//     chrome.contextMenus.create({
-//         id: "****",
-//         title: "***",
-//         contexts: ["all"]
-//     });
-// });
+      // chrome.runtime.openOptionsPage();
+    }
 
-// chrome.storage.sync.set
-
-// this is for the on close the option menu
-
-chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
-  console.log('********** prompts', data.prompts);
-  console.log('********** mContextMenus', data.mContextMenus);
-  chrome.contextMenus.removeAll(function () {
-    if (data.prompts && data.prompts.length) {
-      data.prompts.forEach((item) => {
-        let menu = {
-          id: item.id,
-          title: item.title,
-          contexts: ['selection'],
-        };
-        chrome.contextMenus.create(menu, function () {
+    if (key == 'mContextMenus') {
+      newValue.forEach((item) => {
+        chrome.contextMenus.create(item, function () {
           notification(
             Object.assign(notifyObject, {
               title: 'Context menu created',
@@ -141,6 +113,27 @@ chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
           );
         });
         chrome.contextMenus.onClicked.addListener(getword);
+      });
+    }
+  }
+});
+
+chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
+  localPrompts = data.prompts;
+
+  chrome.contextMenus.removeAll(function () {
+    if (data.prompts && data.prompts.length) {
+      data.prompts.forEach((item) => {
+        chrome.contextMenus.create(
+          {
+            id: item.id,
+            title: item.title,
+            contexts: ['selection'],
+          },
+          function () {
+            chrome.contextMenus.onClicked.addListener(getword);
+          }
+        );
       });
     }
   });

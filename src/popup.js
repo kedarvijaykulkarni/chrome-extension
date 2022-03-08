@@ -13,6 +13,7 @@ function clearResult() {
 }
 
 document.querySelector('#go-to-options').addEventListener('click', function () {
+  console.log('chrome.contextMenus ===', chrome.contextMenus);
   if (chrome.runtime.openOptionsPage) {
     chrome.runtime.openOptionsPage();
   } else {
