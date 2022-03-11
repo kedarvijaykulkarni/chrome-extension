@@ -18,50 +18,62 @@ function getword(info, tab) {
   let prompt = localPrompts.filter((p) => p.id == info.menuItemId) || [];
   let promptId = prompt[0].promptId;
 
-  function getResultString(promptId) {
+  console.log('prompt ::', prompt);
+  console.log('promptId ::', promptId);
+
+  async function getResultString(promptId) {
     alert('Your selected text send to MantiumAI');
-    postData(
-      'https://mantium-whatsapp-chatbot.herokuapp.com/chrome-extension',
+
+    const result = await fetch(
+      `https://shareapi.mantiumai.com/v1/prompt/deployed/${promptId}/execute`,
       {
-        message: window.getSelection().toString(),
-      }
-    ).then((data) => {
-      console.log('MantiumAI ::: response ->', data.output);
-      chrome.storage.sync.set({ output: data.output });
-    });
-
-    async function postData(url = '', data = {}) {
-      // Default options are marked with *
-
-      var details = {
-        message: data.message,
-        prompt_id: promptId,
-      };
-
-      console.log(details);
-
-      var formBody = [];
-      for (var property in details) {
-        var encodedKey = encodeURIComponent(property);
-        var encodedValue = encodeURIComponent(details[property]);
-        formBody.push(encodedKey + '=' + encodedValue);
-      }
-      formBody = formBody.join('&');
-
-      const response = await fetch(url, {
-        method: 'POST', // or 'PUT'
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
         },
-        body: formBody,
-      })
-        .then((response) => response.json())
-        .then((data) => data)
-        .catch((error) => {
-          console.error('Error:', error);
-        });
-      return response; // parses JSON response into native JavaScript objects
-    }
+        body: JSON.stringify({ input: window.getSelection().toString() }),
+      }
+    )
+      .then((response) => response.json())
+      .then(async (data) => {
+        console.log('MantiumAI ::: response ->', data);
+
+        // use to set a loader
+        // chrome.storage.sync.set({ output: 'loader' });
+
+        sessionId = data.sessionId;
+        promptExecutionId = data.prompt_execution_id;
+
+        console.log('MantiumAI ::: sessionId ->', sessionId);
+        console.log('MantiumAI ::: promptExecutionId ->', promptExecutionId);
+
+        return await getResult(data.prompt_execution_id, data.sessionId);
+
+        async function getResult(promptExecutionId, sessionId) {
+          let url = `https://shareapi.mantiumai.com/v1/prompt/deployed/result/${promptExecutionId}?sessionId=${sessionId}`;
+          return await fetch(url)
+            .then((response) => response.json())
+            .then((data) => checkResponse(data));
+
+          function checkResponse(res) {
+            if (
+              res &&
+              !['COMPLETED', 'REJECTED', 'INTERRUPTED', 'ERRORED'].includes(
+                res.status
+              )
+            ) {
+              return fetch(url)
+                .then((response) => response.json())
+                .then((data) => checkResponse(data));
+            } else {
+              return res;
+            }
+          }
+        }
+      });
+
+    chrome.storage.sync.set({ output: result.output });
   }
 
   chrome.scripting.executeScript({
@@ -85,10 +97,10 @@ function getword(info, tab) {
 
 // chrome.storage.sync.get()
 
-chrome.storage.onChanged.addListener(function (changes, namespace) {
+chrome.storage.onChanged.addListener(async function (changes, namespace) {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
     if (key == 'output' && newValue != oldValue) {
-      if (newValue != '') {
+      if (newValue != '' || newValue != 'loader') {
         chrome.notifications.create('', {
           type: 'basic',
           iconUrl: '../public/small-mantium-mark-color-small.png',
@@ -96,8 +108,15 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
           message: newValue,
           priority: 2,
         });
+
+        chrome.action.setBadgeText({ text: ' 1 ' });
+        chrome.action.setBadgeBackgroundColor({ color: '#00b3fa' });
       }
 
+      // chrome.browserAction.setBadgeText({ text: '1' });
+      // chrome.browserAction.setBadgeText({ text: '1' })
+
+      // await chrome.action.setBadgeText({ text: 'it works' });
       // chrome.runtime.openOptionsPage();
     }
 

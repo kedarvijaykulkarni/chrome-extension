@@ -16,6 +16,7 @@ const notifyObject = {
  * methods
  */
 function restore_options() {
+  console.log('restore_options calle');
   // Use default value color = 'red' and likesColor = true.
   chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
     console.log('data.prompts', data.prompts);
@@ -36,7 +37,7 @@ function restore_options() {
         input.type = 'text';
         input.name = item.id;
         input.id = item.id;
-        input.value = item.promptId;
+        input.value = item.url;
         input.classList.add('prompt-field');
 
         rowEle.appendChild(input);
@@ -57,11 +58,15 @@ function restore_options() {
       });
 
       if (mContextMenus.length != prompts.length) {
-        prompts.forEach((item) => {
+        prompts.forEach(async (item) => {
           if (!mContextMenus.some((cm) => item.id == cm.id)) {
-            promptId = document.getElementById(item.id).value;
+            url = document.getElementById(item.id).value;
+            item.promptId = await getPromtId(url);
+            item.url = url;
 
-            item.promptId = promptId;
+            console.log('restore item.promptId', item.promptId);
+
+            // menuItem.title = text.prompt.deploy_name;
             mContextMenus.push({
               id: item.id,
               title: item.title,
@@ -122,9 +127,25 @@ function addPromt() {
 
 function saveContextMenu() {
   mContextMenus = [];
-  prompts.forEach((menuItem, index) => {
-    console.log('menuItem :::', menuItem, menuItem.id);
-    promptId = document.getElementById(menuItem.id).value;
+  prompts.forEach(async (menuItem, index) => {
+    let url = document.getElementById(menuItem.id).value || '';
+    let text = await getPromtId(url);
+    let promptId = '';
+
+    console.log('text:::', text);
+    if (text.isValid) {
+      if (menuItem.promptId != text && text != '') {
+        mContextMenus.isUpdate = true;
+        menuItem.promptId = text.message;
+        menuItem.url = url;
+        menuItem.title = text.prompt.deploy_name;
+      } else {
+        promptId = text.message;
+      }
+    } else {
+      alert(text.message);
+    }
+
     // Object.assign({ contexts: ['selection'] }, menuItem)
     if (document.getElementById(menuItem.id).value) {
       if (
@@ -134,9 +155,10 @@ function saveContextMenu() {
       ) {
         // set the prompt ID that received
         menuItem.promptId = promptId;
+        menuItem.url = url;
         mContextMenus.push({
           id: menuItem.id,
-          title: menuItem.title,
+          title: text.prompt.deploy_name,
           contexts: ['selection'],
         });
 
@@ -156,6 +178,8 @@ function saveContextMenu() {
     }
   });
 
+  console.log('update to local storage');
+  console.log('storage', mContextMenus);
   chrome.storage.sync.set({ mContextMenus, prompts });
 }
 
@@ -185,6 +209,50 @@ function removeAll() {
       window.location.reload();
     });
   }
+}
+
+async function getPromtId(url) {
+  let isValidURL = url.match(
+    /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g
+  );
+  if (isValidURL == null)
+    return {
+      isValid: false,
+      message: 'Invalid URL',
+    };
+
+  if (url.indexOf('share.mantiumai.com') <= 0) {
+    return {
+      isValid: false,
+      message: 'domain must be include share.mantiumai.com',
+    };
+  }
+
+  let res = url.replace('.share.mantiumai.com', '').split('/');
+  let promptArr =
+    res.filter((str) => {
+      return str.length >= 36;
+    }) || [];
+
+  if (promptArr && promptArr.length) {
+    return {
+      isValid: true,
+      message: promptArr[0],
+      prompt: await getPromptDetails(promptArr[0]),
+    };
+  }
+
+  return { isValid: false, message: 'Invalid ID in the URL' };
+}
+
+async function getPromptDetails(promptId) {
+  let prompt = await fetch(
+    `https://shareapi.mantiumai.com/v1/prompt/deployed/${promptId}`
+  )
+    .then((response) => response.json())
+    .then((data) => data);
+
+  return prompt;
 }
 
 /*

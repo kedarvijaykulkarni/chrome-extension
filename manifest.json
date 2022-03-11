@@ -19,7 +19,7 @@
 
   "action": {
     "default_popup": "./src/popup.html",
-    "default_title": "MantiumAI ::: Selection Prompt"
+    "default_title": "MantiumAI"
   },
 
   "background": {
@@ -34,7 +34,9 @@
     "notifications"
   ],
   "host_permissions": [
-    "https://mantium-whatsapp-chatbot.herokuapp.com/",
-    "https://mantium-whatsapp-chatbot.herokuapp.com/chrome-extension"
+    "https://shareapi.mantiumai.com/*",
+    "https://shareapi.mantiumai.com/v1/prompt/deployed/result/",
+    "https://shareapi.mantiumai.com/v1/prompt/deployed/",
+    "https://shareapi.mantiumai.com/v1/prompt/deployed/"
   ]
 }
