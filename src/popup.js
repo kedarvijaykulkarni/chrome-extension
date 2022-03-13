@@ -1,7 +1,7 @@
 chrome.storage.sync.get(['output'], function (data) {
   const results = document.getElementById('results');
 
-  results.innerHTML = data.output;
+  results.innerHTML = data.output || `Execute the prompt to see results.`;
 
   // if (data.output == 'loader') {
   //   results.innerHTML = `<div class="lds-facebook"><div></div><div></div><div></div></div>`;

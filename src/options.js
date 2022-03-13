@@ -119,7 +119,8 @@ function addPromt() {
     del: remove.id,
     row: row.id,
     hasAction: false,
-    title: String('Promt ' + Number(totalPrompt + 1)),
+    promptId: '',
+    title: String('Prompt ' + Number(totalPrompt + 1)),
   });
 
   console.log('prompts :::', prompts);
@@ -129,58 +130,65 @@ function saveContextMenu() {
   mContextMenus = [];
   prompts.forEach(async (menuItem, index) => {
     let url = document.getElementById(menuItem.id).value || '';
-    let text = await getPromtId(url);
-    let promptId = '';
+    await getPromtId(url).then((text) => {
+      let promptId = '';
 
-    console.log('text:::', text);
-    if (text.isValid) {
-      if (menuItem.promptId != text && text != '') {
-        mContextMenus.isUpdate = true;
-        menuItem.promptId = text.message;
-        menuItem.url = url;
-        menuItem.title = text.prompt.deploy_name;
+      console.log('text:::', text);
+      if (text.isValid) {
+        if (menuItem.promptId != text.message && text.message != '') {
+          menuItem.isUpdate = true;
+          menuItem.promptId = text.message;
+          menuItem.url = url;
+          menuItem.title = text.prompt.deploy_name;
+          promptId = text.message;
+        } else {
+          promptId = text.message;
+        }
       } else {
-        promptId = text.message;
+        alert(text.message);
       }
-    } else {
-      alert(text.message);
-    }
 
-    // Object.assign({ contexts: ['selection'] }, menuItem)
-    if (document.getElementById(menuItem.id).value) {
-      if (
-        Array.from(container.children).some(
-          (div) => div.id === menuItem.row && !menuItem.hasAction
-        )
-      ) {
-        // set the prompt ID that received
-        menuItem.promptId = promptId;
-        menuItem.url = url;
-        mContextMenus.push({
-          id: menuItem.id,
-          title: text.prompt.deploy_name,
-          contexts: ['selection'],
-        });
+      console.log('text:::', text);
+      console.log('promptId ------------------------------- :::', promptId);
 
-        // back.addListener(menuItem);
-        menuItem.hasAction = true;
+      // Object.assign({ contexts: ['selection'] }, menuItem)
+      if (document.getElementById(menuItem.id).value) {
+        if (
+          Array.from(container.children).some(
+            (div) => div.id === menuItem.row && !menuItem.hasAction
+          )
+        ) {
+          // set the prompt ID that received
+          menuItem.promptId = promptId;
+          menuItem.url = url;
+          mContextMenus.push({
+            id: menuItem.id,
+            title: text.prompt.deploy_name,
+            contexts: ['selection'],
+          });
+
+          // back.addListener(menuItem);
+          menuItem.hasAction = true;
+        }
+      } else {
+        notification(
+          Object.assign(notifyObject, {
+            title: 'Context menu creation fail!',
+            message: `${Number(index + 1)}. Prompt should have a value!`,
+            priority: 2,
+          })
+        );
+
+        // document.getElementById(menuItem.id).value;
       }
-    } else {
-      notification(
-        Object.assign(notifyObject, {
-          title: 'Context menu creation fail!',
-          message: `${Number(index + 1)}. Prompt should have a value!`,
-          priority: 2,
-        })
-      );
 
-      // document.getElementById(menuItem.id).value;
-    }
+      chrome.storage.sync.set({ mContextMenus, prompts });
+    });
   });
 
   console.log('update to local storage');
-  console.log('storage', mContextMenus);
-  chrome.storage.sync.set({ mContextMenus, prompts });
+  console.log('storage', mContextMenus, prompts);
+  // chrome.storage.sync.set({ prompts });
 }
 
 function removePrompt(parm) {
@@ -233,6 +241,8 @@ async function getPromtId(url) {
     res.filter((str) => {
       return str.length >= 36;
     }) || [];
+
+  console.log('promptArr ::-----------------------', promptArr);
 
   if (promptArr && promptArr.length) {
     return {

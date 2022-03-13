@@ -41,3 +41,11 @@ https://www.codegrepper.com/code-examples/whatever/chrome+extension+sendmessage+
 
 
 https://www.google.com/search?q=response+await+in+chrome+extension&oq=response+await+in+chrome+ex&aqs=chrome.1.69i57j33i22i29i30l3.12112j0j1&sourceid=chrome&ie=UTF-8
+
+
+
+
+https://share.mantiumai.com/prompt/b07ef8d5-3c61-4bac-990a-033ad18c06c7
+https://share.mantiumai.com/prompt/e9c5d968-a6b5-43f2-bcb9-f366d87ec375
+https://share.mantiumai.com/prompt/7dadd8ce-99f8-48ad-bbbe-855d59b85d70
+https://share.mantiumai.com/prompt/a3d71145-f5ec-4a43-8a50-34d0cd489cad

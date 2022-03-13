@@ -5,7 +5,8 @@ const notifyObject = {
   message: 'Your message',
 };
 
-let localPrompts = [];
+// let localPrompts = [];
+const localContextMenus = [];
 
 function notification(parm) {
   chrome.notifications.create('', parm);
@@ -15,72 +16,93 @@ function getword(info, tab) {
   console.log('info ::', info);
   console.log('tab ::', tab);
 
-  let prompt = localPrompts.filter((p) => p.id == info.menuItemId) || [];
-  let promptId = prompt[0].promptId;
+  chrome.storage.sync.get(['prompts'], function (data) {
+    console.log('**** storage.sync.get prompts ::::', data.prompts);
+    console.log('**** getword data.prompts ::::', data.prompts);
 
-  console.log('prompt ::', prompt);
-  console.log('promptId ::', promptId);
+    let prompt =
+      data.prompts.filter((p) => {
+        console.log('p.id :::', p.id);
+        console.log('info.menuItemId :::', info.menuItemId);
+        return p.id === info.menuItemId;
+      }) || [];
+    let promptId = prompt[0].promptId;
 
-  async function getResultString(promptId) {
-    alert('Your selected text send to MantiumAI');
+    console.log('prompt ::', prompt);
+    console.log('promptId ::', promptId);
 
-    const result = await fetch(
-      `https://shareapi.mantiumai.com/v1/prompt/deployed/${promptId}/execute`,
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ input: window.getSelection().toString() }),
-      }
-    )
-      .then((response) => response.json())
-      .then(async (data) => {
-        console.log('MantiumAI ::: response ->', data);
+    async function getResultString(promptId) {
+      alert('Your selected text send to MantiumAI');
+      const result = await fetch(
+        `https://shareapi.mantiumai.com/v1/prompt/deployed/${promptId}/execute`,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ input: window.getSelection().toString() }),
+        }
+      )
+        .then((response) => response.json())
+        .then(async (data) => {
+          console.log('MantiumAI ::: response ->', data);
 
-        // use to set a loader
-        // chrome.storage.sync.set({ output: 'loader' });
+          // use to set a loader
+          // chrome.storage.sync.set({ output: 'loader' });
 
-        sessionId = data.sessionId;
-        promptExecutionId = data.prompt_execution_id;
+          sessionId = data.sessionId;
+          promptExecutionId = data.prompt_execution_id;
 
-        console.log('MantiumAI ::: sessionId ->', sessionId);
-        console.log('MantiumAI ::: promptExecutionId ->', promptExecutionId);
+          console.log('MantiumAI ::: sessionId ->', sessionId);
+          console.log('MantiumAI ::: promptExecutionId ->', promptExecutionId);
 
-        return await getResult(data.prompt_execution_id, data.sessionId);
+          return sessionId && promptExecutionId
+            ? await getResult(data.prompt_execution_id, data.sessionId)
+            : alert('Prompt not found ');
 
-        async function getResult(promptExecutionId, sessionId) {
-          let url = `https://shareapi.mantiumai.com/v1/prompt/deployed/result/${promptExecutionId}?sessionId=${sessionId}`;
-          return await fetch(url)
-            .then((response) => response.json())
-            .then((data) => checkResponse(data));
+          async function getResult(promptExecutionId, sessionId) {
+            let url = `https://shareapi.mantiumai.com/v1/prompt/deployed/result/${promptExecutionId}?sessionId=${sessionId}`;
+            return await fetch(url)
+              .then((response) => response.json())
+              .then((data) => checkResponse(data));
 
-          function checkResponse(res) {
-            if (
-              res &&
-              !['COMPLETED', 'REJECTED', 'INTERRUPTED', 'ERRORED'].includes(
-                res.status
-              )
-            ) {
-              return fetch(url)
-                .then((response) => response.json())
-                .then((data) => checkResponse(data));
-            } else {
-              return res;
+            function checkResponse(res) {
+              if (
+                res &&
+                !['COMPLETED', 'REJECTED', 'INTERRUPTED', 'ERRORED'].includes(
+                  res.status
+                )
+              ) {
+                return fetch(url)
+                  .then((response) => response.json())
+                  .then((data) => {
+                    // let response = null;
+                    setTimeout(() => {
+                      checkResponse(data);
+                    }, 800);
+                    // return response;
+                  });
+              } else {
+                console.log('res :::: ====', res);
+
+                chrome.storage.sync.set({
+                  output: res.output || `Error: ${res.error}`,
+                });
+
+                return res;
+              }
             }
           }
-        }
-      });
+        });
+    }
 
-    chrome.storage.sync.set({ output: result.output });
-  }
-
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    function: getResultString,
-    args: [promptId],
-  });
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: getResultString,
+      args: [promptId],
+    });
+  }); // end get promt from memory
 
   /*
     chrome.scripting.executeScript(
@@ -112,48 +134,63 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
         chrome.action.setBadgeText({ text: ' 1 ' });
         chrome.action.setBadgeBackgroundColor({ color: '#00b3fa' });
       }
-
-      // chrome.browserAction.setBadgeText({ text: '1' });
-      // chrome.browserAction.setBadgeText({ text: '1' })
-
-      // await chrome.action.setBadgeText({ text: 'it works' });
       // chrome.runtime.openOptionsPage();
     }
 
     if (key == 'mContextMenus') {
+      console.log('I am getting created :::', newValue);
       newValue.forEach((item) => {
-        chrome.contextMenus.create(item, function () {
-          notification(
-            Object.assign(notifyObject, {
-              title: 'Context menu created',
-              message: 'Your Context menu are created!',
-              priority: 2,
-            })
-          );
-        });
-        chrome.contextMenus.onClicked.addListener(getword);
+        console.log('localContextMenus ::: ===>', localContextMenus);
+        console.log('item.id ::: ===>', item.id);
+        console.log('condition ::: ===>', !localContextMenus.includes(item.id));
+
+        if (!localContextMenus.includes(item.id)) {
+          let contextMenuId = chrome.contextMenus.create(item, function () {
+            notification(
+              Object.assign(notifyObject, {
+                title: 'Context menu created',
+                message: 'Your Context menu are created!',
+                priority: 2,
+              })
+            );
+          });
+          console.log('contextMenuId', contextMenuId);
+          localContextMenus.push(contextMenuId);
+
+          console.log('getword :::====>', getword);
+          chrome.contextMenus.onClicked.addListener(getword);
+        }
       });
     }
   }
 });
 
 chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
-  localPrompts = data.prompts;
+  // localPrompts = [...new Set(data.prompts)];
 
-  chrome.contextMenus.removeAll(function () {
-    if (data.prompts && data.prompts.length) {
-      data.prompts.forEach((item) => {
-        chrome.contextMenus.create(
+  // chrome.contextMenus.removeAll(function () {
+
+  // console.log('localPrompts ::::', localPrompts);
+
+  if (data.prompts && data.prompts.length) {
+    data.prompts.forEach((item) => {
+      if (!localContextMenus.includes(item.id)) {
+        let contextMenuId = chrome.contextMenus.create(
           {
             id: item.id,
             title: item.title,
             contexts: ['selection'],
           },
           function () {
+            console.log('getword ::: storage ====>', getword);
+
             chrome.contextMenus.onClicked.addListener(getword);
           }
         );
-      });
-    }
-  });
+        localContextMenus.push(contextMenuId);
+      }
+    });
+  }
+
+  // });
 });
