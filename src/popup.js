@@ -3,6 +3,8 @@ chrome.storage.sync.get(['output'], function (data) {
 
   results.innerHTML = data.output || `Execute the prompt to see results.`;
 
+  // /0\ UNDER CONSTRUCTION
+
   // if (data.output == 'loader') {
   //   results.innerHTML = `<div class="lds-facebook"><div></div><div></div><div></div></div>`;
   // } else {

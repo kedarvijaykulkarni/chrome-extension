@@ -13,15 +13,11 @@ const notifyObject = {
   message: 'Your message',
 };
 /*
- * methods
+ * Restore required when we open the option page
+ * the HTML is dynamic and we save the element into the prompts array and retive them from memory and re-draw the html
  */
 function restore_options() {
-  console.log('restore_options calle');
-  // Use default value color = 'red' and likesColor = true.
   chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
-    console.log('data.prompts', data.prompts);
-    console.log('data.mContextMenus', data.mContextMenus);
-
     prompts = data.prompts || [];
     mContextMenus = data.mContextMenus || null;
     if (prompts && prompts.length) {
@@ -47,7 +43,7 @@ function restore_options() {
         remove.value = 'remove';
         remove.id = row.del;
 
-        // hide the remove now
+        // hide the remove now (TODO: Kedar - the delete input box is not ready)
         remove.classList.add('hide');
 
         rowEle.appendChild(remove);
@@ -63,10 +59,7 @@ function restore_options() {
             url = document.getElementById(item.id).value;
             item.promptId = await getPromtId(url);
             item.url = url;
-
-            console.log('restore item.promptId', item.promptId);
-
-            // menuItem.title = text.prompt.deploy_name;
+            // push to mContextMenus to create the context menu from eventPage.js
             mContextMenus.push({
               id: item.id,
               title: item.title,
@@ -75,9 +68,7 @@ function restore_options() {
             item.hasAction = true;
           }
         });
-
         chrome.storage.sync.set({ mContextMenus, prompts });
-        console.log('restore_options -> mContextMenus :::', mContextMenus);
       }
     }
   });
@@ -107,7 +98,7 @@ function addPromt() {
   remove.value = 'remove';
   remove.id = String(deleteIDPrefix + Number(totalPrompt + 1));
 
-  // hide the remove now
+  // hide the remove now (TODO: Kedar - the delete input box is not ready)
   remove.classList.add('hide');
 
   rowEle.appendChild(remove);
@@ -122,8 +113,6 @@ function addPromt() {
     promptId: '',
     title: String('Prompt ' + Number(totalPrompt + 1)),
   });
-
-  console.log('prompts :::', prompts);
 }
 
 function saveContextMenu() {
@@ -133,7 +122,6 @@ function saveContextMenu() {
     await getPromtId(url).then((text) => {
       let promptId = '';
 
-      console.log('text:::', text);
       if (text.isValid) {
         if (menuItem.promptId != text.message && text.message != '') {
           menuItem.isUpdate = true;
@@ -148,10 +136,6 @@ function saveContextMenu() {
         alert(text.message);
       }
 
-      console.log('text:::', text);
-      console.log('promptId ------------------------------- :::', promptId);
-
-      // Object.assign({ contexts: ['selection'] }, menuItem)
       if (document.getElementById(menuItem.id).value) {
         if (
           Array.from(container.children).some(
@@ -178,17 +162,11 @@ function saveContextMenu() {
             priority: 2,
           })
         );
-
-        // document.getElementById(menuItem.id).value;
       }
 
       chrome.storage.sync.set({ mContextMenus, prompts });
     });
   });
-
-  console.log('update to local storage');
-  console.log('storage', mContextMenus, prompts);
-  // chrome.storage.sync.set({ prompts });
 }
 
 function removePrompt(parm) {
@@ -241,8 +219,6 @@ async function getPromtId(url) {
     res.filter((str) => {
       return str.length >= 36;
     }) || [];
-
-  console.log('promptArr ::-----------------------', promptArr);
 
   if (promptArr && promptArr.length) {
     return {

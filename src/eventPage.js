@@ -13,23 +13,12 @@ function notification(parm) {
 }
 
 function getword(info, tab) {
-  console.log('info ::', info);
-  console.log('tab ::', tab);
-
   chrome.storage.sync.get(['prompts'], function (data) {
-    console.log('**** storage.sync.get prompts ::::', data.prompts);
-    console.log('**** getword data.prompts ::::', data.prompts);
-
     let prompt =
       data.prompts.filter((p) => {
-        console.log('p.id :::', p.id);
-        console.log('info.menuItemId :::', info.menuItemId);
         return p.id === info.menuItemId;
       }) || [];
     let promptId = prompt[0].promptId;
-
-    console.log('prompt ::', prompt);
-    console.log('promptId ::', promptId);
 
     async function getResultString(promptId) {
       alert('Your selected text send to MantiumAI');
@@ -46,16 +35,10 @@ function getword(info, tab) {
       )
         .then((response) => response.json())
         .then(async (data) => {
-          console.log('MantiumAI ::: response ->', data);
-
           // use to set a loader
           // chrome.storage.sync.set({ output: 'loader' });
-
           sessionId = data.sessionId;
           promptExecutionId = data.prompt_execution_id;
-
-          console.log('MantiumAI ::: sessionId ->', sessionId);
-          console.log('MantiumAI ::: promptExecutionId ->', promptExecutionId);
 
           return sessionId && promptExecutionId
             ? await getResult(data.prompt_execution_id, data.sessionId)
@@ -77,19 +60,17 @@ function getword(info, tab) {
                 return fetch(url)
                   .then((response) => response.json())
                   .then((data) => {
-                    // let response = null;
+                    // sleep to avoid continue call to MantiumAI API as some time the Process is not done
                     setTimeout(() => {
                       checkResponse(data);
                     }, 800);
-                    // return response;
                   });
               } else {
-                console.log('res :::: ====', res);
-
+                // This send to storage and seen into the popup
                 chrome.storage.sync.set({
                   output: res.output || `Error: ${res.error}`,
                 });
-
+                // there is no benifit of return but function should return the value ;)
                 return res;
               }
             }
@@ -103,21 +84,7 @@ function getword(info, tab) {
       args: [promptId],
     });
   }); // end get promt from memory
-
-  /*
-    chrome.scripting.executeScript(
-      {
-        target: { tabId: tab.id },
-        // files: ['script.js'],
-      },
-      () => {
-        getResultString(promptId);
-      }
-    );
-  */
 }
-
-// chrome.storage.sync.get()
 
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
@@ -126,24 +93,20 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
         chrome.notifications.create('', {
           type: 'basic',
           iconUrl: '../public/small-mantium-mark-color-small.png',
-          title: 'MantiumAI :: Result',
+          title: 'Mantium',
           message: newValue,
           priority: 2,
         });
-
+        // add badge once answer is ready
         chrome.action.setBadgeText({ text: ' 1 ' });
         chrome.action.setBadgeBackgroundColor({ color: '#00b3fa' });
       }
+      // we can open the option page using following line
       // chrome.runtime.openOptionsPage();
     }
 
     if (key == 'mContextMenus') {
-      console.log('I am getting created :::', newValue);
       newValue.forEach((item) => {
-        console.log('localContextMenus ::: ===>', localContextMenus);
-        console.log('item.id ::: ===>', item.id);
-        console.log('condition ::: ===>', !localContextMenus.includes(item.id));
-
         if (!localContextMenus.includes(item.id)) {
           let contextMenuId = chrome.contextMenus.create(item, function () {
             notification(
@@ -154,10 +117,9 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
               })
             );
           });
-          console.log('contextMenuId', contextMenuId);
+
           localContextMenus.push(contextMenuId);
 
-          console.log('getword :::====>', getword);
           chrome.contextMenus.onClicked.addListener(getword);
         }
       });
@@ -166,12 +128,6 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 });
 
 chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
-  // localPrompts = [...new Set(data.prompts)];
-
-  // chrome.contextMenus.removeAll(function () {
-
-  // console.log('localPrompts ::::', localPrompts);
-
   if (data.prompts && data.prompts.length) {
     data.prompts.forEach((item) => {
       if (!localContextMenus.includes(item.id)) {
@@ -182,8 +138,6 @@ chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
             contexts: ['selection'],
           },
           function () {
-            console.log('getword ::: storage ====>', getword);
-
             chrome.contextMenus.onClicked.addListener(getword);
           }
         );
@@ -191,6 +145,4 @@ chrome.storage.sync.get(['prompts', 'mContextMenus'], function (data) {
       }
     });
   }
-
-  // });
 });

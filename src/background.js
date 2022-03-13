@@ -39,7 +39,7 @@ function getword(info, tab) {
           priority: 2,
         })
       );
-
+      // yet to try for .sendMessage advance method to communicate between storage and popup
       // chrome.runtime.sendMessage({ word: data.output });
     });
 
