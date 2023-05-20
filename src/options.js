@@ -117,10 +117,17 @@ function addPromt() {
 
 function saveContextMenu() {
   mContextMenus = [];
+
+
+
   prompts.forEach(async (menuItem, index) => {
     let url = document.getElementById(menuItem.id).value || '';
     await getPromtId(url).then((text) => {
       let promptId = '';
+
+      console.log('text', text);
+      console.log('menuItem', menuItem);
+
 
       if (text.isValid) {
         if (menuItem.promptId != text.message && text.message != '') {
@@ -132,16 +139,25 @@ function saveContextMenu() {
         } else {
           promptId = text.message;
         }
+
+        console.log('I am in prompts', prompts);
       } else {
         alert(text.message);
       }
 
       if (document.getElementById(menuItem.id).value) {
+
+        console.log('I am inside creation')
+        console.log('container.children :::', container.children)
+
+
         if (
           Array.from(container.children).some(
-            (div) => div.id === menuItem.row && !menuItem.hasAction
+            (div) => div.id === menuItem.row && menuItem.hasAction
           )
         ) {
+
+          console.log('I am inside context menu creation')
           // set the prompt ID that received
           menuItem.promptId = promptId;
           menuItem.url = url;
@@ -220,6 +236,8 @@ async function getPromtId(url) {
       return str.length >= 36;
     }) || [];
 
+  console.log('promptArr', promptArr);
+
   if (promptArr && promptArr.length) {
     return {
       isValid: true,
@@ -231,13 +249,15 @@ async function getPromtId(url) {
   return { isValid: false, message: 'Invalid ID in the URL' };
 }
 
+
+//https://share.mantiumai.com/prompt/eb2ffa51-4a60-4999-a2bb-7f9fc5d5f2ee
 async function getPromptDetails(promptId) {
   let prompt = await fetch(
     `https://shareapi.mantiumai.com/v1/prompt/deployed/${promptId}`
   )
     .then((response) => response.json())
     .then((data) => data);
-
+  console.log('prompt', prompt);
   return prompt;
 }
 
